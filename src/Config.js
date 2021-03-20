@@ -1,0 +1,1 @@
+export const SECRET_KEY = 'this is very secret key'

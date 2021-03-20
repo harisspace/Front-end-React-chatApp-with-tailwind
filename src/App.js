@@ -1,25 +1,34 @@
-import logo from './logo.svg';
-import './App.css';
+import React from "react"
+import { BrowserRouter as Router, Route, Switch } from "react-router-dom"
+
+import AuthRoute from "./utils/AuthRoute"
+import Nav from "./components/Nav"
+import Home from "./pages/Home"
+import Login from "./pages/Login"
+import Register from "./pages/Register"
+import NotMatch from "./pages/NotMatch"
+import AuthContextProvider from "./contexts/AuthContext"
+import ProtectRoute from "./utils/ProtectRoute"
+import SelectedUserContextProvider from "./contexts/SelectedUserContext"
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    <AuthContextProvider>
+      <SelectedUserContextProvider>
+        <div className="max-h-screen overflow-hidden relative">
+          <Router>
+            <Nav />
+            <Switch>
+              <ProtectRoute exact path="/" component={Home} />
+              <AuthRoute path="/login" component={Login} />
+              <AuthRoute path="/register" component={Register} />
+              <Route path="*" component={NotMatch} />
+            </Switch>
+          </Router>
+        </div>
+      </SelectedUserContextProvider>
+    </AuthContextProvider>
+  )
 }
 
-export default App;
+export default App
