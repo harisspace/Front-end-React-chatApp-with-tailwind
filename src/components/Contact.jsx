@@ -1,7 +1,6 @@
 import React from "react"
 
 function Contact({ user: { username, latestMessage } }) {
-  console.log(latestMessage)
   return (
     <div className="flex border-b-2 border-gray-300 p-2 cursor-pointer">
       <img

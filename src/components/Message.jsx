@@ -1,9 +1,10 @@
-import React, { useState, useContext } from "react"
+import React, { useState, useContext, useRef, useEffect } from "react"
 import { AuthContext } from "../contexts/AuthContext"
 import { SelectedUserContext } from "../contexts/SelectedUserContext"
 import { gql, useMutation } from "@apollo/client"
 
 function Message({ messages }) {
+  const messageEl = useRef(null)
   const [value, setValue] = useState("")
   const { user } = useContext(AuthContext)
   const { selectedUser } = useContext(SelectedUserContext)
@@ -34,6 +35,16 @@ function Message({ messages }) {
     },
   })
 
+  // make scroll from bottom
+  useEffect(() => {
+    if (messageEl) {
+      messageEl.current.addEventListener("DOMNodeInserted", (event) => {
+        const { currentTarget: target } = event
+        target.scroll({ top: target.scrollHeight })
+      })
+    }
+  }, [messages])
+
   const handleChange = (e) => {
     setValue(e.target.value)
   }
@@ -43,9 +54,15 @@ function Message({ messages }) {
     sendMessage()
   }
 
+  if (messageEl.current) {
+    messageEl.current.scroll({
+      top: messageEl.current.scrollHeight,
+    })
+  }
+
   return (
     <>
-      <div className="overflow-y-scroll flex-1 px-20">
+      <div className="overflow-y-scroll flex-1 px-20" ref={messageEl}>
         {messages &&
           messages.map((message) => (
             <span

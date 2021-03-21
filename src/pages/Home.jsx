@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from "react"
+import React, { useContext, useEffect, useRef } from "react"
 import { gql, useLazyQuery, useQuery } from "@apollo/client"
 
 import { AuthContext } from "../contexts/AuthContext"
@@ -8,6 +8,7 @@ import Contact from "../components/Contact"
 import Message from "../components/Message"
 
 function Home() {
+  const mainRef = useRef(null)
   const { user } = useContext(AuthContext)
   const { selectedUser, selectUser } = useContext(SelectedUserContext)
 
@@ -30,7 +31,7 @@ function Home() {
 
   // console.log(data)
 
-  console.log(usersData)
+  // console.log(usersData)
 
   useEffect(() => {
     if (data !== undefined && data.getUsersMessage.length <= 0) {
@@ -57,6 +58,10 @@ function Home() {
         },
       })
     }
+    // for scroll
+    // if (mainRef.current) {
+    //   mainRef.current.scroll({ top: mainRef.current.scrollHeight })
+    // }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedUser])
 
@@ -64,11 +69,9 @@ function Home() {
     return <Spinner />
   }
 
-  // console.log(messagesData)
-
   return (
     // devided 2 section
-    <main className="grid grid-cols-4">
+    <main className="grid grid-cols-4" ref={mainRef}>
       {/* card container */}
       <div className="col-span-1 max-h-screen overflow-y-scroll">
         {/* card contact */}
