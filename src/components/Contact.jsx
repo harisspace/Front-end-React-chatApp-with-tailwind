@@ -1,6 +1,7 @@
 import React from "react"
 
-function Contact() {
+function Contact({ user: { username, latestMessage } }) {
+  console.log(latestMessage)
   return (
     <div className="flex border-b-2 border-gray-300 p-2 cursor-pointer">
       <img
@@ -9,8 +10,10 @@ function Contact() {
         alt="user"
       />
       <div className="ml-2">
-        <span>Haris</span>
-        <span className="block">this is last message</span>
+        <span>{username}</span>
+        <span className="block">
+          {latestMessage !== null ? latestMessage.body : `chat ${username} now`}
+        </span>
       </div>
     </div>
   )

@@ -7,7 +7,10 @@ module.exports = {
         outline: "0 0 5px rgba(81, 203, 238, 1)",
       },
       maxHeight: {
-        fluid: "100vh" - "330px",
+        fluid: "calc(100vh - 330px)",
+      },
+      height: {
+        fluid: "calc(100vh - 330px)",
       },
     },
   },

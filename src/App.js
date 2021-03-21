@@ -15,7 +15,7 @@ function App() {
   return (
     <AuthContextProvider>
       <SelectedUserContextProvider>
-        <div className="max-h-screen overflow-hidden relative">
+        <div>
           <Router>
             <Nav />
             <Switch>

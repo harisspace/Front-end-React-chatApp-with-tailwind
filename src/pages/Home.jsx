@@ -1,11 +1,11 @@
-import React, { useContext, useEffet } from "react"
-import { gql, useMutation, useLazyQuery, useQuery } from "@apollo/client"
+import React, { useContext, useEffect } from "react"
+import { gql, useLazyQuery, useQuery } from "@apollo/client"
 
 import { AuthContext } from "../contexts/AuthContext"
 import { SelectedUserContext } from "../contexts/SelectedUserContext"
 import Spinner from "../components/Spinner"
 import Contact from "../components/Contact"
-import Messages from "../components/Messages"
+import Message from "../components/Message"
 
 function Home() {
   const { user } = useContext(AuthContext)
@@ -18,9 +18,53 @@ function Home() {
     },
   })
 
+  // handle if never send message or find user
+  const [getUsers, { loading: loadingUsers, data: usersData }] = useLazyQuery(
+    GET_USERS,
+    {
+      onError(err) {
+        console.log(err)
+      },
+    }
+  )
+
+  // console.log(data)
+
+  console.log(usersData)
+
+  useEffect(() => {
+    if (data !== undefined && data.getUsersMessage.length <= 0) {
+      getUsers()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data])
+
+  const [
+    getMessage,
+    { loading: messageLoading, data: messagesData },
+  ] = useLazyQuery(GET_MESSAGES, {
+    onError(err) {
+      console.log(err)
+    },
+  })
+
+  useEffect(() => {
+    if (selectedUser) {
+      getMessage({
+        variables: {
+          userId: user.id,
+          to: selectedUser,
+        },
+      })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedUser])
+
   if (loading) {
     return <Spinner />
   }
+
+  // console.log(messagesData)
 
   return (
     // devided 2 section
@@ -28,26 +72,26 @@ function Home() {
       {/* card container */}
       <div className="col-span-1 max-h-screen overflow-y-scroll">
         {/* card contact */}
-        <Contact />
-        <Contact />
-        <Contact />
-        <Contact />
-        <Contact />
-        <Contact />
-        <Contact />
-        <Contact />
-        <Contact />
-        <Contact />
-        <Contact />
-        <Contact />
-        <Contact />
-        <Contact />
-        <Contact />
-        <Contact />
+        {data &&
+          data.getUsersMessage.map((user) => (
+            <div key={user.id} onClick={() => selectUser(user.id)}>
+              <Contact user={user} />
+            </div>
+          ))}
+
+        {usersData !== undefined &&
+          usersData.getUsers.map((user) => (
+            <div key={user.id} onClick={() => selectUser(user.id)}>
+              <Contact user={user} />
+            </div>
+          ))}
       </div>
 
-      <div className="col-span-3 max-h-fluid overflow-hidden">
-        <Messages />
+      <div className="col-span-3 flex flex-col max-h-screen justify-between overflow-hidden">
+        {messageLoading && <Spinner />}
+        {messagesData && messagesData.getMessages && (
+          <Message messages={messagesData.getMessages} />
+        )}
       </div>
     </main>
   )
@@ -78,6 +122,20 @@ const GET_MESSAGES = gql`
       to
       createdAt
       body
+    }
+  }
+`
+
+const GET_USERS = gql`
+  query GetUsers {
+    getUsers {
+      username
+      id
+      email
+      latestMessage {
+        body
+      }
+      createdAt
     }
   }
 `
