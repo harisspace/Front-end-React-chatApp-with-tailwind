@@ -1,16 +1,18 @@
 import React, { useContext, useEffect, useRef } from "react"
-import { gql, useLazyQuery, useQuery } from "@apollo/client"
-
+import { useLazyQuery, useQuery } from "@apollo/client"
 import { AuthContext } from "../contexts/AuthContext"
 import { SelectedUserContext } from "../contexts/SelectedUserContext"
 import Spinner from "../components/Spinner"
 import Contact from "../components/Contact"
 import Message from "../components/Message"
+import { MessageContext } from "../contexts/MessageContext"
+import { GET_MESSAGES, GET_USERS_MESSAGE, GET_USERS } from "../graphql/query"
 
 function Home() {
   const mainRef = useRef(null)
   const { user } = useContext(AuthContext)
   const { selectedUser, selectUser } = useContext(SelectedUserContext)
+  const { newMessages } = useContext(MessageContext)
 
   const { data, loading } = useQuery(GET_USERS_MESSAGE, {
     variables: { userId: user.id },
@@ -29,10 +31,6 @@ function Home() {
     }
   )
 
-  // console.log(data)
-
-  // console.log(usersData)
-
   useEffect(() => {
     if (data !== undefined && data.getUsersMessage.length <= 0) {
       getUsers()
@@ -50,20 +48,23 @@ function Home() {
   })
 
   useEffect(() => {
-    if (selectedUser) {
-      getMessage({
-        variables: {
-          userId: user.id,
-          to: selectedUser,
-        },
-      })
+    if (selectedUser && messagesData) {
+      newMessages(messagesData.getMessages)
     }
-    // for scroll
-    // if (mainRef.current) {
-    //   mainRef.current.scroll({ top: mainRef.current.scrollHeight })
-    // }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedUser])
+  }, [messagesData, messageLoading])
+
+  // useEffect(() => {
+  //   if (selectedUser) {
+  //     getMessage({
+  //       variables: {
+  //         userId: user.id,
+  //         to: selectedUser,
+  //       },
+  //     })
+  //   }
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [selectedUser])
 
   if (loading) {
     return <Spinner />
@@ -91,56 +92,14 @@ function Home() {
       </div>
 
       <div className="col-span-3 flex flex-col max-h-screen justify-between overflow-hidden">
-        {messageLoading && <Spinner />}
+        {/* {messageLoading && <Spinner />}
         {messagesData && messagesData.getMessages && (
           <Message messages={messagesData.getMessages} />
-        )}
+        )} */}
+        {selectedUser ? <Message selectedUser={selectedUser} /> : <Spinner />}
       </div>
     </main>
   )
 }
-
-const GET_USERS_MESSAGE = gql`
-  query GetUsersMessage($userId: ID!) {
-    getUsersMessage(userId: $userId) {
-      id
-      username
-      createdAt
-      latestMessage {
-        id
-        from
-        to
-        createdAt
-        body
-      }
-    }
-  }
-`
-
-const GET_MESSAGES = gql`
-  query GetMessages($userId: ID!, $to: ID!) {
-    getMessages(userId: $userId, to: $to) {
-      id
-      from
-      to
-      createdAt
-      body
-    }
-  }
-`
-
-const GET_USERS = gql`
-  query GetUsers {
-    getUsers {
-      username
-      id
-      email
-      latestMessage {
-        body
-      }
-      createdAt
-    }
-  }
-`
 
 export default Home

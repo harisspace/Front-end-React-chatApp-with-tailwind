@@ -1,49 +1,86 @@
 import React, { useState, useContext, useRef, useEffect } from "react"
 import { AuthContext } from "../contexts/AuthContext"
-import { SelectedUserContext } from "../contexts/SelectedUserContext"
-import { gql, useMutation } from "@apollo/client"
+import { useMutation, useSubscription, useQuery } from "@apollo/client"
+import { NEW_MESSAGE } from "../graphql/subscription"
+import { SEND_MESSAGE } from "../graphql/mutation"
+import { GET_MESSAGES } from "../graphql/query"
 
-function Message({ messages }) {
+function Message({ selectedUser }) {
   const messageEl = useRef(null)
   const [value, setValue] = useState("")
   const { user } = useContext(AuthContext)
-  const { selectedUser } = useContext(SelectedUserContext)
-  // console.log(messages)
-  // console.log(user)
-  const [sendMessage, { loading }] = useMutation(SEND_MESSAGE, {
-    variables: {
-      from: user.id,
-      to: selectedUser,
-      body: value,
-    },
-    update(proxy, result) {
-      const data = proxy.readQuery({
-        query: GET_MESSAGES,
-        variables: { userId: user.id, to: selectedUser },
-      })
-      let newData = [...data.getMessages]
-      newData = [result.data.sendMessage, ...newData]
-      proxy.writeQuery({
-        query: GET_MESSAGES,
-        variables: { userId: user.id, to: selectedUser },
-        data: { getMessages: { newData } },
-      })
-      setValue("")
-    },
+
+  const { data: messages, subscribeToMore } = useQuery(GET_MESSAGES, {
     onError(err) {
       console.log(err)
     },
+    variables: {
+      userId: user.id,
+      to: selectedUser,
+    },
   })
+
+  const {
+    data: newMessage,
+    loading: messageLoading,
+    error: messageError,
+  } = useSubscription(NEW_MESSAGE)
+
+  const subscribeToNewMessage = () => {
+    subscribeToMore({
+      document: GET_MESSAGES,
+      variables: { userId: user.id, to: selectedUser },
+      updateQuery: (prev, { subscriptionData }) => {
+        if (!subscriptionData) return prev
+        const newMessageItem = subscriptionData.data.getMessages
+        console.log(prev, "prev")
+        console.log(newMessageItem, "new")
+        return Object.assign({}, prev, {
+          getMessages: newMessageItem,
+          ...prev.getMessages,
+        })
+      },
+    })
+  }
+
+  useEffect(() => {
+    if (messageError) return console.log(messageError)
+    subscribeToNewMessage()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [newMessage])
+
+  useEffect(() => {
+    if (selectedUser) {
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedUser])
 
   // make scroll from bottom
   useEffect(() => {
+    if (messageEl.current) {
+      messageEl.current.scroll({
+        top: messageEl.current.scrollHeight,
+      })
+    }
+    // scroll when new message occur
     if (messageEl) {
       messageEl.current.addEventListener("DOMNodeInserted", (event) => {
         const { currentTarget: target } = event
         target.scroll({ top: target.scrollHeight })
       })
     }
-  }, [messages])
+  }, [messages, selectedUser])
+
+  const [sendMessage] = useMutation(SEND_MESSAGE, {
+    variables: {
+      from: user.id,
+      to: selectedUser,
+      body: value,
+    },
+    onError(err) {
+      console.log(err)
+    },
+  })
 
   const handleChange = (e) => {
     setValue(e.target.value)
@@ -52,31 +89,30 @@ function Message({ messages }) {
   const sendMessageSubmit = (e) => {
     e.preventDefault()
     sendMessage()
-  }
-
-  if (messageEl.current) {
-    messageEl.current.scroll({
-      top: messageEl.current.scrollHeight,
-    })
+    setValue("")
   }
 
   return (
     <>
-      <div className="overflow-y-scroll flex-1 px-20" ref={messageEl}>
+      <div
+        className="overflow-y-scroll flex-1 px-20 flex flex-col"
+        ref={messageEl}
+      >
         {messages &&
-          messages.map((message) => (
+          messages.getMessages.map((message) => (
             <span
               key={message.id}
               className={
                 message.from === user.id
-                  ? "block text-right mb-2"
-                  : "block mb-2"
+                  ? "max-w-xs self-end py-2 px-3 rounded-md mb-2 bg-green-400"
+                  : "max-w-xs bg-red-300 rounded-md py-2 px-3 mb-2"
               }
             >
               {message.body}
             </span>
           ))}
       </div>
+
       <div>
         <form onSubmit={sendMessageSubmit}>
           <input
@@ -91,29 +127,5 @@ function Message({ messages }) {
     </>
   )
 }
-
-const SEND_MESSAGE = gql`
-  mutation SendMessage($from: ID!, $to: ID!, $body: String!) {
-    sendMessage(from: $from, to: $to, body: $body) {
-      id
-      from
-      createdAt
-      body
-      to
-    }
-  }
-`
-
-const GET_MESSAGES = gql`
-  query GetMessages($userId: ID!, $to: ID!) {
-    getMessages(userId: $userId, to: $to) {
-      id
-      from
-      to
-      createdAt
-      body
-    }
-  }
-`
 
 export default Message
