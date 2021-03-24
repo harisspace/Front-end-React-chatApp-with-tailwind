@@ -32,6 +32,7 @@ const wsLink = new WebSocketLink({
   uri: "ws://localhost:4000/graphql",
   options: {
     reconnect: true,
+    timeout: 30000,
     connectionParams: {
       Authorization: `Bearer ${localStorage.getItem("jwtToken")}`,
     },

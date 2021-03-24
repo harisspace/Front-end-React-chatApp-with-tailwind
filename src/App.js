@@ -9,25 +9,22 @@ import NotMatch from "./pages/NotMatch"
 import AuthContextProvider from "./contexts/AuthContext"
 import ProtectRoute from "./utils/ProtectRoute"
 import SelectedUserContextProvider from "./contexts/SelectedUserContext"
-import MessageContextProvider from "./contexts/MessageContext"
 
 function App() {
   return (
     <AuthContextProvider>
       <SelectedUserContextProvider>
-        <MessageContextProvider>
-          <div>
-            <Router>
-              <Nav />
-              <Switch>
-                <ProtectRoute exact path="/" component={Home} />
-                <AuthRoute path="/login" component={Login} />
-                <AuthRoute path="/register" component={Register} />
-                <Route path="*" component={NotMatch} />
-              </Switch>
-            </Router>
-          </div>
-        </MessageContextProvider>
+        <div>
+          <Router>
+            <Nav />
+            <Switch>
+              <ProtectRoute exact path="/" component={Home} />
+              <AuthRoute path="/login" component={Login} />
+              <AuthRoute path="/register" component={Register} />
+              <Route path="*" component={NotMatch} />
+            </Switch>
+          </Router>
+        </div>
       </SelectedUserContextProvider>
     </AuthContextProvider>
   )

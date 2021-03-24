@@ -9,6 +9,7 @@ function Message({ selectedUser }) {
   const messageEl = useRef(null)
   const [value, setValue] = useState("")
   const { user } = useContext(AuthContext)
+  const inputEl = useRef(null)
 
   const { data: messages, subscribeToMore } = useQuery(GET_MESSAGES, {
     onError(err) {
@@ -33,8 +34,6 @@ function Message({ selectedUser }) {
       updateQuery: (prev, { subscriptionData }) => {
         if (!subscriptionData) return prev
         const newMessageItem = subscriptionData.data.getMessages
-        console.log(prev, "prev")
-        console.log(newMessageItem, "new")
         return Object.assign({}, prev, {
           getMessages: newMessageItem,
           ...prev.getMessages,
@@ -47,13 +46,7 @@ function Message({ selectedUser }) {
     if (messageError) return console.log(messageError)
     subscribeToNewMessage()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [newMessage])
-
-  useEffect(() => {
-    if (selectedUser) {
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedUser])
+  }, [newMessage, messageLoading, messageError])
 
   // make scroll from bottom
   useEffect(() => {
@@ -68,6 +61,10 @@ function Message({ selectedUser }) {
         const { currentTarget: target } = event
         target.scroll({ top: target.scrollHeight })
       })
+    }
+
+    if (inputEl) {
+      inputEl.current.focus()
     }
   }, [messages, selectedUser])
 
@@ -116,6 +113,7 @@ function Message({ selectedUser }) {
       <div>
         <form onSubmit={sendMessageSubmit}>
           <input
+            ref={inputEl}
             type="text"
             className="input"
             placeholder="typing the message.."

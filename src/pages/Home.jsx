@@ -5,14 +5,13 @@ import { SelectedUserContext } from "../contexts/SelectedUserContext"
 import Spinner from "../components/Spinner"
 import Contact from "../components/Contact"
 import Message from "../components/Message"
-import { MessageContext } from "../contexts/MessageContext"
-import { GET_MESSAGES, GET_USERS_MESSAGE, GET_USERS } from "../graphql/query"
+import { GET_USERS_MESSAGE, GET_USERS } from "../graphql/query"
+import YouAreConnect from "../components/YouAreConnect"
 
 function Home() {
   const mainRef = useRef(null)
   const { user } = useContext(AuthContext)
   const { selectedUser, selectUser } = useContext(SelectedUserContext)
-  const { newMessages } = useContext(MessageContext)
 
   const { data, loading } = useQuery(GET_USERS_MESSAGE, {
     variables: { userId: user.id },
@@ -37,34 +36,6 @@ function Home() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data])
-
-  const [
-    getMessage,
-    { loading: messageLoading, data: messagesData },
-  ] = useLazyQuery(GET_MESSAGES, {
-    onError(err) {
-      console.log(err)
-    },
-  })
-
-  useEffect(() => {
-    if (selectedUser && messagesData) {
-      newMessages(messagesData.getMessages)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messagesData, messageLoading])
-
-  // useEffect(() => {
-  //   if (selectedUser) {
-  //     getMessage({
-  //       variables: {
-  //         userId: user.id,
-  //         to: selectedUser,
-  //       },
-  //     })
-  //   }
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [selectedUser])
 
   if (loading) {
     return <Spinner />
@@ -96,7 +67,11 @@ function Home() {
         {messagesData && messagesData.getMessages && (
           <Message messages={messagesData.getMessages} />
         )} */}
-        {selectedUser ? <Message selectedUser={selectedUser} /> : <Spinner />}
+        {selectedUser ? (
+          <Message selectedUser={selectedUser} />
+        ) : (
+          <YouAreConnect />
+        )}
       </div>
     </main>
   )
