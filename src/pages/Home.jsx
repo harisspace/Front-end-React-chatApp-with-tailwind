@@ -13,22 +13,18 @@ function Home() {
   const { user } = useContext(AuthContext)
   const { selectedUser, selectUser } = useContext(SelectedUserContext)
 
-  const { data, loading } = useQuery(GET_USERS_MESSAGE, {
+  const { data, loading, refetch } = useQuery(GET_USERS_MESSAGE, {
     variables: { userId: user.id },
     onError(err) {
       console.error(err)
     },
   })
-
   // handle if never send message or find user
-  const [getUsers, { loading: loadingUsers, data: usersData }] = useLazyQuery(
-    GET_USERS,
-    {
-      onError(err) {
-        console.log(err)
-      },
-    }
-  )
+  const [getUsers, { data: usersData }] = useLazyQuery(GET_USERS, {
+    onError(err) {
+      console.log(err)
+    },
+  })
 
   useEffect(() => {
     if (data !== undefined && data.getUsersMessage.length <= 0) {
@@ -63,12 +59,8 @@ function Home() {
       </div>
 
       <div className="col-span-3 flex flex-col max-h-screen justify-between overflow-hidden">
-        {/* {messageLoading && <Spinner />}
-        {messagesData && messagesData.getMessages && (
-          <Message messages={messagesData.getMessages} />
-        )} */}
         {selectedUser ? (
-          <Message selectedUser={selectedUser} />
+          <Message selectedUser={selectedUser} refetch={refetch} />
         ) : (
           <YouAreConnect />
         )}

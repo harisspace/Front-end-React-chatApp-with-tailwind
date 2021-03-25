@@ -4,14 +4,15 @@ import { useMutation, useSubscription, useQuery } from "@apollo/client"
 import { NEW_MESSAGE } from "../graphql/subscription"
 import { SEND_MESSAGE } from "../graphql/mutation"
 import { GET_MESSAGES } from "../graphql/query"
+import Spinner from "../components/Spinner"
 
-function Message({ selectedUser }) {
+function Message({ selectedUser, refetch }) {
   const messageEl = useRef(null)
   const [value, setValue] = useState("")
   const { user } = useContext(AuthContext)
   const inputEl = useRef(null)
 
-  const { data: messages, subscribeToMore } = useQuery(GET_MESSAGES, {
+  const { data: messages, loading, subscribeToMore } = useQuery(GET_MESSAGES, {
     onError(err) {
       console.log(err)
     },
@@ -34,6 +35,7 @@ function Message({ selectedUser }) {
       updateQuery: (prev, { subscriptionData }) => {
         if (!subscriptionData) return prev
         const newMessageItem = subscriptionData.data.getMessages
+        refetch()
         return Object.assign({}, prev, {
           getMessages: newMessageItem,
           ...prev.getMessages,
@@ -92,10 +94,13 @@ function Message({ selectedUser }) {
   return (
     <>
       <div
-        className="overflow-y-scroll flex-1 px-20 flex flex-col"
+        className="overflow-y-scroll flex-1 px-20 flex flex-col bg-gray-100"
         ref={messageEl}
       >
-        {messages &&
+        {loading ? (
+          <Spinner />
+        ) : (
+          messages &&
           messages.getMessages.map((message) => (
             <span
               key={message.id}
@@ -107,7 +112,8 @@ function Message({ selectedUser }) {
             >
               {message.body}
             </span>
-          ))}
+          ))
+        )}
       </div>
 
       <div>
