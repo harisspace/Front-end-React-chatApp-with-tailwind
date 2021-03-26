@@ -6,21 +6,40 @@ import { SEND_MESSAGE } from "../graphql/mutation"
 import { GET_MESSAGES } from "../graphql/query"
 import Spinner from "../components/Spinner"
 
-function Message({ selectedUser, refetch }) {
+function Message({ selectedUser, refetch: refetchUsers }) {
+  const [paginationLoading, setPaginationLoading] = useState(false)
   const messageEl = useRef(null)
   const [value, setValue] = useState("")
   const { user } = useContext(AuthContext)
   const inputEl = useRef(null)
+  const selectedRef = useRef(selectedUser)
+  const [hasMoreItems, setHasMoreItems] = useState(true)
 
-  const { data: messages, loading, subscribeToMore } = useQuery(GET_MESSAGES, {
+  const {
+    data: messages,
+    loading,
+    subscribeToMore,
+    fetchMore,
+    refetch,
+  } = useQuery(GET_MESSAGES, {
     onError(err) {
       console.log(err)
     },
     variables: {
       userId: user.id,
       to: selectedUser,
+      offset: 0,
     },
   })
+
+  useEffect(() => {
+    if (selectedUser !== selectedRef.current) {
+      refetch()
+      selectedRef.current = selectedUser
+      setHasMoreItems(true)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedUser])
 
   const {
     data: newMessage,
@@ -35,7 +54,7 @@ function Message({ selectedUser, refetch }) {
       updateQuery: (prev, { subscriptionData }) => {
         if (!subscriptionData) return prev
         const newMessageItem = subscriptionData.data.getMessages
-        refetch()
+        refetchUsers()
         return Object.assign({}, prev, {
           getMessages: newMessageItem,
           ...prev.getMessages,
@@ -46,9 +65,11 @@ function Message({ selectedUser, refetch }) {
 
   useEffect(() => {
     if (messageError) return console.log(messageError)
-    subscribeToNewMessage()
+    if (subscribeToMore) {
+      subscribeToNewMessage()
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [newMessage, messageLoading, messageError])
+  }, [newMessage])
 
   // make scroll from bottom
   useEffect(() => {
@@ -91,28 +112,62 @@ function Message({ selectedUser, refetch }) {
     setValue("")
   }
 
+  const handleScroll = () => {
+    if (messageEl) {
+      console.log(messageEl.current.scrollTop)
+    }
+  }
+
   return (
     <>
       <div
+        onScroll={handleScroll}
         className="overflow-y-scroll flex-1 px-20 flex flex-col bg-gray-100"
         ref={messageEl}
       >
+        {paginationLoading && <Spinner />}
+        {hasMoreItems && (
+          <button
+            className="button"
+            onClick={() => {
+              fetchMore({
+                variables: {
+                  offset: messages.getMessages.length,
+                },
+              }).then((fetchMore) => {
+                if (fetchMore.loading) {
+                  setPaginationLoading(true)
+                } else {
+                  setPaginationLoading(false)
+                }
+                if (fetchMore.data.getMessages.length < 35) {
+                  setHasMoreItems(false)
+                }
+              })
+            }}
+          >
+            Load More
+          </button>
+        )}
         {loading ? (
           <Spinner />
         ) : (
           messages &&
-          messages.getMessages.map((message) => (
-            <span
-              key={message.id}
-              className={
-                message.from === user.id
-                  ? "max-w-xs self-end py-2 px-3 rounded-md mb-2 bg-green-400"
-                  : "max-w-xs bg-red-300 rounded-md py-2 px-3 mb-2"
-              }
-            >
-              {message.body}
-            </span>
-          ))
+          messages.getMessages
+            .slice()
+            .reverse()
+            .map((message) => (
+              <span
+                key={message.id}
+                className={
+                  message.from === user.id
+                    ? "max-w-xs self-end py-2 px-3 rounded-md mb-2 bg-green-400"
+                    : "max-w-xs bg-red-300 rounded-md py-2 px-3 mb-2"
+                }
+              >
+                {message.body}
+              </span>
+            ))
         )}
       </div>
 

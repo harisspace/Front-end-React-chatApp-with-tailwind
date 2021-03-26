@@ -15,8 +15,8 @@ export const GET_USERS = gql`
 `
 
 export const GET_MESSAGES = gql`
-  query GetMessages($userId: ID!, $to: ID!) {
-    getMessages(userId: $userId, to: $to) {
+  query GetMessages($userId: ID!, $to: ID!, $offset: Int) {
+    getMessages(userId: $userId, to: $to, offset: $offset) {
       id
       from
       to

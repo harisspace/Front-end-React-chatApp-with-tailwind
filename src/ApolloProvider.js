@@ -32,7 +32,7 @@ const wsLink = new WebSocketLink({
   uri: "ws://localhost:4000/graphql",
   options: {
     reconnect: true,
-    timeout: 30000,
+    timeout: 3000,
     connectionParams: {
       Authorization: `Bearer ${localStorage.getItem("jwtToken")}`,
     },
@@ -53,9 +53,31 @@ const splitLink = split(
   httpLink
 )
 
+const cache = new InMemoryCache({
+  typePolicies: {
+    Query: {
+      fields: {
+        getMessages: {
+          keyArgs: false,
+          merge(existing, incoming, { args: { offset = 0, to, userId } }) {
+            // Slicing is necessary because the existing data is
+            // immutable, and frozen in development.
+            console.log(to, userId)
+            const merged = existing ? existing.slice(0) : []
+            for (let i = 0; i < incoming.length; ++i) {
+              merged[offset + i] = incoming[i]
+            }
+            return merged
+          },
+        },
+      },
+    },
+  },
+})
+
 const client = new ApolloClient({
   link: splitLink,
-  cache: new InMemoryCache(),
+  cache,
 })
 
 export default (
