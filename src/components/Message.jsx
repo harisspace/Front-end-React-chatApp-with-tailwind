@@ -14,6 +14,7 @@ function Message({ selectedUser, refetch: refetchUsers }) {
   const inputEl = useRef(null)
   const selectedRef = useRef(selectedUser)
   const [hasMoreItems, setHasMoreItems] = useState(true)
+  const [messagePaginationMerge, setMessagePaginationMerge] = useState(null)
 
   const {
     data: messages,
@@ -113,8 +114,22 @@ function Message({ selectedUser, refetch: refetchUsers }) {
   }
 
   const handleScroll = () => {
-    if (messageEl) {
-      console.log(messageEl.current.scrollTop)
+    if (messageEl.current.scrollTop === 0 && hasMoreItems) {
+      fetchMore({
+        variables: {
+          offset: messages.getMessages.length,
+        },
+      }).then((fetchMore) => {
+        if (fetchMore.loading) {
+          setPaginationLoading(true)
+        } else {
+          setPaginationLoading(false)
+        }
+        setMessagePaginationMerge(fetchMore.data.getMessages)
+        if (fetchMore.data.getMessages.length < 35) {
+          setHasMoreItems(false)
+        }
+      })
     }
   }
 
@@ -126,29 +141,6 @@ function Message({ selectedUser, refetch: refetchUsers }) {
         ref={messageEl}
       >
         {paginationLoading && <Spinner />}
-        {hasMoreItems && (
-          <button
-            className="button"
-            onClick={() => {
-              fetchMore({
-                variables: {
-                  offset: messages.getMessages.length,
-                },
-              }).then((fetchMore) => {
-                if (fetchMore.loading) {
-                  setPaginationLoading(true)
-                } else {
-                  setPaginationLoading(false)
-                }
-                if (fetchMore.data.getMessages.length < 35) {
-                  setHasMoreItems(false)
-                }
-              })
-            }}
-          >
-            Load More
-          </button>
-        )}
         {loading ? (
           <Spinner />
         ) : (
